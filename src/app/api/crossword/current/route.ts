@@ -10,9 +10,8 @@ export async function GET() {
       include: { words: true },
     })
 
-    // Return empty structure if no crossword exists
     if (!crossword) {
-      return NextResponse.json({ id: "", rows: 0, columns: 0, words: [] })
+      return NextResponse.json({ error: "No crossword found" }, { status: 404 })
     }
 
     return NextResponse.json(crossword)

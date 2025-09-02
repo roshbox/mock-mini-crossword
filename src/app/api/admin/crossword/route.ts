@@ -1,3 +1,4 @@
+// src/app/api/admin/crossword/route.ts
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
@@ -5,8 +6,7 @@ import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
-// Move admin emails to environment variable for security
-const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(",") || []
+const ADMIN_EMAILS = ["roshnitoday@gmail.com"]
 
 // Define the type for a crossword word
 type WordInput = {
@@ -18,18 +18,14 @@ type WordInput = {
 }
 
 export async function POST(req: Request) {
+  const session = await getServerSession(authOptions)
+
+  if (!session || !session.user?.email || !ADMIN_EMAILS.includes(session.user.email)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   try {
-    const session = await getServerSession(authOptions)
-    if (!session || !session.user?.email || !ADMIN_EMAILS.includes(session.user.email)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const { rows, columns, words }: { rows: number; columns: number; words: WordInput[] } = await req.json()
-
-    // Validate input
-    if (!rows || !columns || !words || !Array.isArray(words)) {
-      return NextResponse.json({ error: "Invalid input" }, { status: 400 })
-    }
 
     // Delete existing crossword(s)
     await prisma.crosswordWord.deleteMany({})
