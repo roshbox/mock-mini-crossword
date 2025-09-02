@@ -8,6 +8,15 @@ const prisma = new PrismaClient()
 
 const ADMIN_EMAILS = ["roshnitoday@gmail.com"]
 
+// Define the type for a crossword word
+type WordInput = {
+  word: string
+  clue: string
+  row: number
+  column: number
+  direction: "across" | "down"
+}
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
 
@@ -16,7 +25,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { rows, columns, words } = await req.json()
+    const { rows, columns, words }: { rows: number; columns: number; words: WordInput[] } = await req.json()
 
     // Delete existing crossword(s)
     await prisma.crosswordWord.deleteMany({})
@@ -31,7 +40,7 @@ export async function POST(req: Request) {
         rows,
         columns,
         words: {
-          create: words.map((w: any) => ({
+          create: words.map(w => ({
             word: w.word,
             clue: w.clue,
             row: w.row,
@@ -44,7 +53,7 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json({ success: true, crossword })
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error saving crossword:", err)
     return NextResponse.json({ error: "Failed to save crossword" }, { status: 500 })
   }
