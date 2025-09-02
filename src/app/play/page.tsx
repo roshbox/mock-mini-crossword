@@ -75,9 +75,13 @@ export default function PlayPage() {
       .then(res => res.json())
       .then((data: Crossword) => {
         setCrossword(data)
+
+        // Empty grid
         const g: string[][] = Array.from({ length: data.rows }, () => Array(data.columns).fill(""))
         setGrid(g)
-        const sol: string[][] = Array.from({ length: data.rows }, () => Array(data.columns).fill(undefined))
+
+        // Solution grid
+        const sol: string[][] = Array.from({ length: data.rows }, () => Array(data.columns).fill(""))
         data.words.forEach(w => {
           for (let i = 0; i < w.word.length; i++) {
             const r = w.direction === "down" ? w.row - 1 + i : w.row - 1
@@ -86,6 +90,7 @@ export default function PlayPage() {
           }
         })
         setSolutionGrid(sol)
+
         inputRefs.current = Array.from({ length: data.rows }, () => Array(data.columns).fill(null))
       })
       .catch(console.error)
@@ -111,7 +116,6 @@ export default function PlayPage() {
     setSelectedWordDirection(word ? word.direction : null)
     setCursorPos({ r, c })
 
-    // Focus the clicked input immediately
     setTimeout(() => {
       inputRefs.current[r]?.[c]?.focus()
     }, 0)
@@ -213,7 +217,7 @@ export default function PlayPage() {
       {/* Crossword board */}
       {crossword && !canPlay && !hasPlayed && (
         <div className="mt-16">
-        <h1 className="text-xl font-mono font-bold text-gray-400 mb-2">Play Crossword</h1>
+          <h1 className="text-xl font-mono font-bold text-gray-400 mb-2">Play Crossword</h1>
           <p className="mb-4 font-semibold">
             Time: {Math.floor(seconds / 60)}:{(seconds % 60).toString().padStart(2, "0")}
           </p>
@@ -221,7 +225,7 @@ export default function PlayPage() {
           <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${crossword.columns}, 40px)` }}>
             {grid.map((rowArr, r) =>
               rowArr.map((cell, c) => {
-                const isActive = solutionGrid[r]?.[c] !== undefined
+                const isActive = solutionGrid[r]?.[c] !== ""
                 if (!isActive) return <div key={`${r}-${c}`} className="w-10 h-10 bg-gray-900" />
 
                 const isHighlighted = selectedWord
