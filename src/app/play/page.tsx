@@ -149,16 +149,23 @@ export default function PlayPage() {
     if (!selectedWordDirection || !isRunning) return
     let nextR = r
     let nextC = c
+
     switch (e.key) {
       case "Backspace":
         e.preventDefault()
-        if (grid[r][c] !== solutionGrid[r][c]) {
+        if (grid[r][c] && grid[r][c] !== solutionGrid[r][c]) {
+          // Clear wrong letter, stay here
           const newGrid = grid.map(row => [...row])
           newGrid[r][c] = ""
           setGrid(newGrid)
+          return
+        } else {
+          // Already empty or correct → move back
+          if (selectedWordDirection === "across") nextC = c - 1
+          else nextR = r - 1
         }
-        // stay in the same square
         break
+
       case "Delete":
         e.preventDefault()
         if (grid[r][c] !== solutionGrid[r][c]) {
@@ -166,34 +173,23 @@ export default function PlayPage() {
           delGrid[r][c] = ""
           setGrid(delGrid)
         }
-        break
-      case "ArrowLeft":
-        e.preventDefault()
-        nextC = c - 1
-        break
-      case "ArrowRight":
-        e.preventDefault()
-        nextC = c + 1
-        break
-      case "ArrowUp":
-        e.preventDefault()
-        nextR = r - 1
-        break
-      case "ArrowDown":
-        e.preventDefault()
-        nextR = r + 1
-        break
-      default:
         return
+
+      case "ArrowLeft": e.preventDefault(); nextC = c - 1; break
+      case "ArrowRight": e.preventDefault(); nextC = c + 1; break
+      case "ArrowUp": e.preventDefault(); nextR = r - 1; break
+      case "ArrowDown": e.preventDefault(); nextR = r + 1; break
+      default: return
     }
 
+    // Skip over correct squares
     while (
       inputRefs.current[nextR]?.[nextC] &&
       solutionGrid[nextR]?.[nextC] &&
       grid[nextR][nextC] === solutionGrid[nextR][nextC]
     ) {
-      if (selectedWordDirection === "across") nextC += e.key === "ArrowLeft" ? -1 : 1
-      else nextR += e.key === "ArrowUp" ? -1 : 1
+      if (selectedWordDirection === "across") nextC += e.key === "ArrowLeft" || e.key === "Backspace" ? -1 : 1
+      else nextR += e.key === "ArrowUp" || e.key === "Backspace" ? -1 : 1
     }
 
     if (inputRefs.current[nextR]?.[nextC]) inputRefs.current[nextR][nextC]?.focus()
@@ -202,7 +198,9 @@ export default function PlayPage() {
   // Check if solved
   useEffect(() => {
     if (!crossword || !solutionGrid.length || hasSaved) return
-    const solved = grid.every((row, r) => row.every((cell, c) => !solutionGrid[r][c] || cell === solutionGrid[r][c]))
+    const solved = grid.every((row, r) =>
+      row.every((cell, c) => !solutionGrid[r][c] || cell === solutionGrid[r][c])
+    )
     if (solved) {
       setIsRunning(false)
       setHasSaved(true)
@@ -259,7 +257,10 @@ export default function PlayPage() {
             Time: {Math.floor(seconds / 60)}:{(seconds % 60).toString().padStart(2, "0")}
           </p>
 
-          <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${crossword.columns}, 40px)` }}>
+          <div
+            className="grid gap-1"
+            style={{ gridTemplateColumns: `repeat(${crossword.columns}, 40px)` }}
+          >
             {grid.map((rowArr, r) =>
               rowArr.map((cell, c) => {
                 const isActive = solutionGrid[r]?.[c] !== ""
